@@ -18,8 +18,13 @@ public class AnimationCanvas extends View {
     private Bitmap poseRight, poseLeft, currentPose;
     private Bitmap backgroundImageRaw;
     private Bitmap backgroundImage;
+    private int bgPosX, bgPosY;
+    private int bgVel;
     private int posX, posY;
     private int vel;
+
+    private static final int BGWIDTH = 1920;         // 背景画像のリサイズ時に画面サイズがわからないので、やむを得ず定義
+    private static final int BGHEIGHT = 1200;        // 背景画像のリサイズ時に画面サイズがわからないので、やむを得ず定義
     private static final long DELAY_MILLIS = 10;    // 10mseec以下はあまり変わらない(Nexus7の場合)
 
     public AnimationCanvas(Context context) {
@@ -30,7 +35,12 @@ public class AnimationCanvas extends View {
 
         // 背景画像の読み込み
         backgroundImageRaw = BitmapFactory.decodeResource(res, R.drawable.bg);
-        backgroundImage = Bitmap.createScaledBitmap(backgroundImageRaw, 1920, 1200, false);
+        backgroundImage = Bitmap.createScaledBitmap(backgroundImageRaw, BGWIDTH, BGHEIGHT, false);
+
+        // 位置、速さ(背景)
+        bgPosX = 0;
+        bgPosY = 0;
+        bgVel = 3;
 
         // droid画像の読み込み
         poseRight = BitmapFactory.decodeResource(res, R.drawable.droid1);
@@ -47,9 +57,9 @@ public class AnimationCanvas extends View {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
-        // 画面背景
-        canvas.drawColor(Color.WHITE);
-        canvas.drawBitmap(backgroundImage, 0, 0, myPaint);
+        // 背景
+        canvas.drawBitmap(backgroundImage, bgPosX, bgPosY, myPaint);
+        canvas.drawBitmap(backgroundImage, bgPosX - BGWIDTH, bgPosY, myPaint);
 
         // 文字の描画
         myPaint.setTextSize(100);
@@ -64,6 +74,9 @@ public class AnimationCanvas extends View {
      * 移動処理
      */
     private void move() {
+        bgPosX += bgVel;
+        bgPosX %= BGWIDTH;
+
         posX += vel;
         if (posX > this.getWidth() - currentPose.getWidth()) {
             vel *= -1;
