@@ -11,17 +11,21 @@ import android.view.View;
 
 import android.os.Handler;
 import android.os.Message;
+import android.widget.EdgeEffect;
 
 public class AnimationCanvas extends View {
     private Paint myPaint = new Paint();
 
-    private Bitmap poseRight, poseLeft, currentPose;
+    private Bitmap[] droid;
+    private int droidPose;
     private Bitmap backgroundImageRaw;
     private Bitmap backgroundImage;
     private int bgPosX, bgPosY;
     private int bgVel;
-    private int posX, posY;
-    private int vel;
+    private int droidPosX, droidPosY;
+    private double droidPosOrg, droidPosPhase, droidPosAmp, droidPosPitch;
+    private double droidPosEdgeSize;
+    private int droidPoseCount;
 
     private static final int BGWIDTH = 1920;         // 背景画像のリサイズ時に画面サイズがわからないので、やむを得ず定義
     private static final int BGHEIGHT = 1200;        // 背景画像のリサイズ時に画面サイズがわからないので、やむを得ず定義
@@ -43,14 +47,23 @@ public class AnimationCanvas extends View {
         bgVel = 3;
 
         // droid画像の読み込み
-        poseRight = BitmapFactory.decodeResource(res, R.drawable.droid1);
-        poseLeft = BitmapFactory.decodeResource(res, R.drawable.droid2);
-        currentPose = poseRight;
+        droid = new Bitmap[4];
+        droid[0] = BitmapFactory.decodeResource(res, R.drawable.droid01);
+        droid[1] = BitmapFactory.decodeResource(res, R.drawable.droid02);
+        droid[2] = BitmapFactory.decodeResource(res, R.drawable.droid03);
+        droid[3] = BitmapFactory.decodeResource(res, R.drawable.droid04);
+        droidPose = 0;
+        droidPoseCount = 0;
 
-        // 位置、速さ
-        posX = 0;
-        posY = 0;
-        vel = 5;
+        // 位置、上下動
+        droidPosOrg = 475;
+        droidPosPhase = 0;
+        droidPosAmp = 30;
+        droidPosPitch = 0.01;
+        droidPosEdgeSize = Math.PI / 10;
+
+        droidPosX = BGWIDTH / 2;
+        droidPosY = (int)droidPosOrg;
     }
 
     @Override
@@ -64,32 +77,34 @@ public class AnimationCanvas extends View {
         // 文字の描画
         myPaint.setTextSize(100);
         myPaint.setTextAlign(Paint.Align.CENTER);
-        canvas.drawText("Animation Canvas", this.getWidth() / 2, this.getHeight() / 2, myPaint);
+        myPaint.setColor(Color.BLUE);
+        canvas.drawText("どろいど君 一人旅", this.getWidth() / 2, 150, myPaint);
 
         // 画像の描画
-        canvas.drawBitmap(currentPose, posX, posY, myPaint);
+        canvas.drawBitmap(droid[droidPose], droidPosX, droidPosY, myPaint);
     }
 
     /**
-     * 移動処理
+     * 更新処理
      */
-    private void move() {
+    private void update() {
+        // 背景処理
         bgPosX += bgVel;
         bgPosX %= BGWIDTH;
 
-        posX += vel;
-        if (posX > this.getWidth() - currentPose.getWidth()) {
-            vel *= -1;
-            currentPose = poseLeft;
-            posY += currentPose.getHeight();
+        // droid処理
+        droidPosPhase += droidPosPitch;
+        droidPosPhase %= (Math.PI * 2);
+        droidPosY = (int)(droidPosOrg + Math.sin(droidPosPhase) * droidPosAmp);
+        if (droidPosPhase > Math.PI / 2 - droidPosEdgeSize && droidPosPhase < Math.PI / 2 + droidPosEdgeSize || droidPosPhase > Math.PI * 3 / 2 - droidPosEdgeSize && droidPosPhase < Math.PI * 3 / 2 + droidPosEdgeSize) {
+            droidPose = 2 + (droidPoseCount / 5) % 2;
+            droidPoseCount++;
         }
-        if (posX < 0) {
-            vel *= -1;
-            currentPose = poseRight;
-            posY += currentPose.getHeight();
+        else if(droidPosPhase < Math.PI) {
+            droidPose = 0;
         }
-        if (posY > this.getHeight() - currentPose.getHeight()) {
-            posY = 0;
+        else {
+            droidPose = 1;
         }
     }
 
@@ -99,10 +114,7 @@ public class AnimationCanvas extends View {
     private Handler myHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
-            // 移動処理
-            move();
-
-            // 再描画
+            update();
             invalidate();
 
             sendEmptyMessageDelayed(0, DELAY_MILLIS);
