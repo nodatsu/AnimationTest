@@ -16,6 +16,8 @@ public class AnimationCanvas extends View {
     private Paint myPaint = new Paint();
 
     private Bitmap poseRight, poseLeft, currentPose;
+    private Bitmap backgroundImageRaw;
+    private Bitmap backgroundImage;
     private int posX, posY;
     private int vel;
     private static final long DELAY_MILLIS = 10;    // 10mseec以下はあまり変わらない(Nexus7の場合)
@@ -26,7 +28,11 @@ public class AnimationCanvas extends View {
         // リソース取得
         Resources res = this.getContext().getResources();
 
-        // 画像の読み込み
+        // 背景画像の読み込み
+        backgroundImageRaw = BitmapFactory.decodeResource(res, R.drawable.bg);
+        backgroundImage = Bitmap.createScaledBitmap(backgroundImageRaw, 1920, 1200, false);
+
+        // droid画像の読み込み
         poseRight = BitmapFactory.decodeResource(res, R.drawable.droid1);
         poseLeft = BitmapFactory.decodeResource(res, R.drawable.droid2);
         currentPose = poseRight;
@@ -43,6 +49,7 @@ public class AnimationCanvas extends View {
 
         // 画面背景
         canvas.drawColor(Color.WHITE);
+        canvas.drawBitmap(backgroundImage, 0, 0, myPaint);
 
         // 文字の描画
         myPaint.setTextSize(100);
